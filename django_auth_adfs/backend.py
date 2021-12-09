@@ -51,9 +51,6 @@ class AdfsBaseBackend(ModelBackend):
         return adfs_response
 
     def validate_access_token(self, access_token):
-        logger.debug(f'Expected audience {self.get_audience()}')
-        decoded_token = jwt.decode(access_token, options={"verify_signature": False})
-        logger.debug(json.dumps(decoded_token, indent=4))
         for idx, key in enumerate(provider_config.signing_keys):
             try:
                 # Explicitly define the verification option.
@@ -101,7 +98,6 @@ class AdfsBaseBackend(ModelBackend):
 
         logger.debug("Received access token: %s", access_token)
         claims = self.validate_access_token(access_token)
-        logger.debug(f'Claims: {claims}')
         if (
             settings.BLOCK_GUEST_USERS
             and claims.get('tid')
