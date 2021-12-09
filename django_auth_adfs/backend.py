@@ -1,3 +1,4 @@
+import json
 import logging
 
 import jwt
@@ -14,6 +15,13 @@ logger = logging.getLogger("django_auth_adfs")
 
 
 class AdfsBaseBackend(ModelBackend):
+
+    def __init__(self):
+        self._audience = settings.AUDIENCE
+
+    def get_audience(self):
+        return self._audience
+
     def exchange_auth_code(self, authorization_code, request):
         logger.debug("Received authorization code: %s", authorization_code)
         data = {
@@ -43,6 +51,9 @@ class AdfsBaseBackend(ModelBackend):
         return adfs_response
 
     def validate_access_token(self, access_token):
+        logger.debug(f'Expected audience {self.get_audience()}')
+        decoded_token = jwt.decode(access_token, options={"verify_signature": False})
+        logger.debug(json.dumps(decoded_token, indent=4))
         for idx, key in enumerate(provider_config.signing_keys):
             try:
                 # Explicitly define the verification option.
@@ -65,7 +76,7 @@ class AdfsBaseBackend(ModelBackend):
                     access_token,
                     key=key,
                     algorithms=['RS256', 'RS384', 'RS512'],
-                    audience=settings.AUDIENCE,
+                    audience=self.get_audience(),
                     issuer=provider_config.issuer,
                     options=options,
                     leeway=settings.JWT_LEEWAY
@@ -90,6 +101,7 @@ class AdfsBaseBackend(ModelBackend):
 
         logger.debug("Received access token: %s", access_token)
         claims = self.validate_access_token(access_token)
+        logger.debug(f'Claims: {claims}')
         if (
             settings.BLOCK_GUEST_USERS
             and claims.get('tid')
@@ -297,6 +309,9 @@ class AdfsAccessTokenBackend(AdfsBaseBackend):
     Authentication backend to allow authenticating users against a
     Microsoft ADFS server with an access token retrieved by the client.
     """
+    def __init__(self):
+        # Override the audience
+        self._audience = settings.REST_AUDIENCE
 
     def authenticate(self, request=None, access_token=None, **kwargs):
         # If loaded data is too old, reload it again
