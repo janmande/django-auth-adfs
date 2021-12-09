@@ -51,6 +51,7 @@ class Settings(object):
     def __init__(self):
         # Set defaults
         self.AUDIENCE = None  # Required
+        self.REST_AUDIENCE = None
         self.BLOCK_GUEST_USERS = False
         self.BOOLEAN_CLAIM_MAPPING = {}
         self.CA_BUNDLE = True
@@ -136,6 +137,9 @@ class Settings(object):
                                   "email": "email"}
         elif "VERSION" in _settings:
             raise ImproperlyConfigured("The VERSION cannot be set when TENANT_ID is not set.")
+
+        if not "REST_AUDIENCE" in _settings:
+            _settings["REST_AUDIENCE"] = _settings["AUDIENCE"]
 
         # Overwrite defaults with user settings
         for setting, value in _settings.items():

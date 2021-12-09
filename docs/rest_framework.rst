@@ -42,11 +42,13 @@ Enable the ``AdfsAccessTokenBackend`` authentication backend in ``settings.py``:
         ...
     )
 
-Prevent your API from triggering a login redirect:
+Prevent your API from triggering a login redirect and include REST_AUDIENCE for your API if this is
+not the same as AUDIENCE. For Azure AD this must be a valid URI:
 
 .. code-block:: python
 
     AUTH_ADFS = {
+        'REST_AUDIENCE': 'api://' + client_id # Set to Application ID URI of your API as configured in Azure AD
         'LOGIN_EXEMPT_URLS': [
             '^api',  # Assuming you API is available at /api
         ],
